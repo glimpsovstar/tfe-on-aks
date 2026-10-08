@@ -165,8 +165,12 @@ run "stack_identity_roles" {
   command = apply
 
   assert {
-    condition     = toset([for r in azurerm_role_assignment.stack_rg : r.role_definition_name]) == toset(["Contributor", "User Access Administrator"])
-    error_message = "Stack identity needs Contributor and User Access Administrator on the RG."
+    condition     = azurerm_role_assignment.stack_contributor.role_definition_name == "Contributor" && azurerm_role_assignment.stack_rbac_admin.role_definition_name == "Role Based Access Control Administrator"
+    error_message = "Stack identity gets Contributor plus Role Based Access Control Administrator (never User Access Administrator)."
+  }
+  assert {
+    condition     = azurerm_role_assignment.stack_rbac_admin.condition_version == "2.0" && strcontains(azurerm_role_assignment.stack_rbac_admin.condition, "4d97b98b-1d4f-4787-a291-c67834d212e7") && strcontains(azurerm_role_assignment.stack_rbac_admin.condition, "b7e6dc6d-f1e8-4753-8033-0f276bb0955b") && length(regexall("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", azurerm_role_assignment.stack_rbac_admin.condition)) == 4
+    error_message = "The ABAC condition must limit assignable roles to Network Contributor and Storage Blob Data Owner only (write and delete)."
   }
 }
 
