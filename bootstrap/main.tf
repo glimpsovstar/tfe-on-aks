@@ -63,11 +63,50 @@ resource "azurerm_consumption_budget_resource_group" "lab" {
   }
 }
 
-resource "azurerm_role_assignment" "stack_rg" {
-  for_each             = toset(["Contributor", "User Access Administrator"])
+# The Stack creates resources (Contributor) and two role assignments made by the HVD module:
+# Network Contributor (AKS identity on its subnets) and Storage Blob Data Owner (TFE identity on Blob).
+# Instead of User Access Administrator, which could grant any role (including Owner) in this resource
+# group, it gets Role Based Access Control Administrator limited by an ABAC condition to those two roles.
+locals {
+  stack_assignable_role_ids = [
+    "4d97b98b-1d4f-4787-a291-c67834d212e7", # Network Contributor
+    "b7e6dc6d-f1e8-4753-8033-0f276bb0955b", # Storage Blob Data Owner
+  ]
+  stack_rbac_condition = <<-EOT
+    (
+     (
+      !(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})
+     )
+     OR
+     (
+      @Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {${join(", ", local.stack_assignable_role_ids)}}
+     )
+    )
+    AND
+    (
+     (
+      !(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})
+     )
+     OR
+     (
+      @Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {${join(", ", local.stack_assignable_role_ids)}}
+     )
+    )
+  EOT
+}
+
+resource "azurerm_role_assignment" "stack_contributor" {
   scope                = azurerm_resource_group.this.id
-  role_definition_name = each.key
+  role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.stack.principal_id
+}
+
+resource "azurerm_role_assignment" "stack_rbac_admin" {
+  scope                = azurerm_resource_group.this.id
+  role_definition_name = "Role Based Access Control Administrator"
+  principal_id         = azurerm_user_assigned_identity.stack.principal_id
+  condition_version    = "2.0"
+  condition            = local.stack_rbac_condition
 }
 
 module "network" {
