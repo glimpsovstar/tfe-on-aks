@@ -1,0 +1,9 @@
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "<state-rg>"
+    storage_account_name = "<state-account>"
+    container_name       = "tfstate"
+    key                  = "tfe/03-config.tfstate"
+    use_azuread_auth     = true
+  }
+}

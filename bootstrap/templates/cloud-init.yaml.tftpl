@@ -1,0 +1,38 @@
+#cloud-config
+package_update: true
+packages:
+  - unzip
+  - curl
+write_files:
+  - path: /etc/tfc-agent.env
+    permissions: "0600"
+    content: |
+      TFC_AGENT_TOKEN=${agent_token}
+      TFC_AGENT_NAME=${agent_name}
+  - path: /etc/systemd/system/tfc-agent.service
+    permissions: "0644"
+    content: |
+      [Unit]
+      Description=HCP Terraform agent
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      User=tfc-agent
+      EnvironmentFile=/etc/tfc-agent.env
+      WorkingDirectory=/opt/tfc-agent
+      ExecStart=/opt/tfc-agent/tfc-agent
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+runcmd:
+  - useradd --system --home-dir /opt/tfc-agent --shell /usr/sbin/nologin tfc-agent
+  - mkdir -p /opt/tfc-agent
+  - curl -fsSL -o /tmp/tfc-agent.zip https://releases.hashicorp.com/tfc-agent/${agent_version}/tfc-agent_${agent_version}_linux_amd64.zip
+  - unzip -o /tmp/tfc-agent.zip -d /opt/tfc-agent
+  - chown -R tfc-agent:tfc-agent /opt/tfc-agent
+  - chown tfc-agent:tfc-agent /etc/tfc-agent.env
+  - systemctl daemon-reload
+  - systemctl enable --now tfc-agent

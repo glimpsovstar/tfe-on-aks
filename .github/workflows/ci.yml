@@ -1,0 +1,55 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.5
+      - uses: terraform-linters/setup-tflint@v4
+      - run: terraform fmt -check -recursive
+      # vendor/ is upstream HashiCorp code (see vendor/terraform-enterprise-aks-hvd/PATCHES.md), so only our directories are linted.
+      - run: |
+          tflint --init
+          for d in bootstrap modules examples; do tflint --recursive --chdir="$d" --config "$GITHUB_WORKSPACE/.tflint.hcl"; done
+      - uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          exit-code: "1"
+          severity: HIGH,CRITICAL
+      - name: terraform-docs drift
+        run: |
+          curl -sSLo td.tgz https://github.com/terraform-docs/terraform-docs/releases/download/v0.24.0/terraform-docs-v0.24.0-linux-amd64.tar.gz
+          tar -xzf td.tgz terraform-docs
+          for d in modules/*; do ./terraform-docs markdown table --output-file README.md --output-mode inject "$d"; done
+          git diff --exit-code -- 'modules/*/README.md'
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.5
+      - run: ./scripts/test.sh
+
+  stack-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.5
+      - run: |
+          if ls *.tfcomponent.hcl >/dev/null 2>&1; then
+            terraform stacks init
+            terraform stacks providers-lock -platform=linux_amd64 -platform=darwin_arm64
+            terraform stacks validate
+          else
+            echo "no stack files yet"
+          fi

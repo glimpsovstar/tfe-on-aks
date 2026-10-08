@@ -1,0 +1,9 @@
+subscription_id = "<subscription-id>"
+key_vault_id    = "<key-vault-resource-id>"
+tfe_hostname    = "<tfe-fqdn>"
+
+organization_name  = "<organization-name>"
+organization_email = "<organization-email>"
+
+# Sample only: the admin token user has no 2FA. Use "two_factor_mandatory" once every owner has enrolled 2FA, or SSO.
+collaborator_auth_policy = "password"

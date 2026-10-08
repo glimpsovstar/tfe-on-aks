@@ -1,0 +1,6 @@
+# AZU-0043: AKS cluster has no Kubernetes network policy.
+# The AKS cluster is created by HashiCorp's terraform-enterprise-aks-hvd module 0.3.0,
+# which exposes no network_policy input, so this repo cannot set it.
+# Known gap, documented in the README; revisit when the module adds the input
+# or when support for using an existing AKS cluster is added.
+AZU-0043

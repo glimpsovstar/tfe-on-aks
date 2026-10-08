@@ -1,0 +1,18 @@
+state_resource_group_name  = "<state-rg>"
+state_storage_account_name = "<state-account>"
+
+subscription_id = "<subscription-id>"
+tfe_hostname    = "<tfe-fqdn>"
+tfe_license     = "<tfe-license>" # prefer TF_VAR_tfe_license over writing it here
+
+lb_subnet_name = "<lb-subnet-name>"
+lb_static_ip   = "<lb-static-ip>"
+key_vault_id   = "<key-vault-resource-id>"
+
+private_dns_zone_name          = "<private-dns-zone>"
+resource_group_name            = "<resource-group>"
+public_dns_zone_name           = "<public-dns-zone>"
+public_dns_zone_resource_group = "<public-dns-zone-rg>"
+acme_azure_auth_method         = "msi" # "cli" on a laptop over VPN
+
+admin_email       = "<admin-email>"

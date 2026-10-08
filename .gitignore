@@ -1,0 +1,19 @@
+# Local only. Never commit.
+*.local.md
+lab.local.md
+.superpowers/
+demo-vpn/
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+*.tfplan
+*kubeconfig*
+*.hclic
+!bootstrap/tests/fixtures/*.hclic
+*.pem
+*.p12
+*.pfx
+crash.log
+.DS_Store
