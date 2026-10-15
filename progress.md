@@ -13,7 +13,7 @@ Reference implementation: build AKS (or use an existing one), install Terraform 
 
 ## Next
 1. Choose and add a LICENSE.
-2. Run option B against a live existing AKS cluster and record the result. Then: option B in the Stack, and Entra-only clusters (kubelogin) for `02-app`.
+2. Run option B against a live existing AKS cluster and record the result. Then: `02-app` authenticates with the operator's Entra login (kubelogin), so option B no longer puts the existing cluster's admin credential in `01-infra` state (security review finding, 2026-10-16); option B in the Stack.
 3. Return to the registry HVD module once a tagged release has Redis `NoCluster` (on upstream `main` since PR #24, not in 0.3.0) and a kube_config output.
 
 ## Key context
