@@ -28,7 +28,9 @@ Wraps HashiCorp's HVD module 0.3.0 (vendored in `vendor/terraform-enterprise-aks
 
 ## Providers
 
-No providers.
+| Name | Version |
+| ---- | ------- |
+| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | 4.81.0 |
 
 ## Modules
 
@@ -38,17 +40,26 @@ No providers.
 
 ## Resources
 
-No resources.
+| Name | Type |
+| ---- | ---- |
+| [azurerm_federated_identity_credential.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/federated_identity_credential) | resource |
+| [azurerm_role_assignment.tfe_blob](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment) | resource |
+| [azurerm_user_assigned_identity.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/user_assigned_identity) | resource |
+| [azurerm_kubernetes_cluster.existing](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/kubernetes_cluster) | data source |
+| [azurerm_storage_account.tfe](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/storage_account) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_aks_authorized_cidrs"></a> [aks\_authorized\_cidrs](#input\_aks\_authorized\_cidrs) | /32 CIDRs allowed on the AKS API (agent IP + operators). | `list(string)` | n/a | yes |
-| <a name="input_aks_kubernetes_version"></a> [aks\_kubernetes\_version](#input\_aks\_kubernetes\_version) | AKS version supported in the region and by TFE (az aks get-versions -l australiaeast). | `string` | n/a | yes |
+| <a name="input_aks_kubernetes_version"></a> [aks\_kubernetes\_version](#input\_aks\_kubernetes\_version) | AKS version supported in the region and by TFE (az aks get-versions -l australiaeast). Required when create\_aks\_cluster = true. | `string` | `null` | no |
 | <a name="input_aks_subnet_id"></a> [aks\_subnet\_id](#input\_aks\_subnet\_id) | AKS node subnet ID. | `string` | n/a | yes |
+| <a name="input_create_aks_cluster"></a> [create\_aks\_cluster](#input\_create\_aks\_cluster) | true: the HVD module creates the AKS cluster. false: deploy TFE on an existing cluster named in existing\_aks\_cluster\_name. | `bool` | `true` | no |
 | <a name="input_db_password_secret_name"></a> [db\_password\_secret\_name](#input\_db\_password\_secret\_name) | Name of the Key Vault secret with the database password. | `string` | n/a | yes |
 | <a name="input_db_subnet_id"></a> [db\_subnet\_id](#input\_db\_subnet\_id) | PostgreSQL delegated subnet ID. | `string` | n/a | yes |
+| <a name="input_existing_aks_cluster_name"></a> [existing\_aks\_cluster\_name](#input\_existing\_aks\_cluster\_name) | Existing AKS cluster for TFE (create\_aks\_cluster = false). It must have the OIDC issuer and workload identity enabled. | `string` | `null` | no |
+| <a name="input_existing_aks_resource_group_name"></a> [existing\_aks\_resource\_group\_name](#input\_existing\_aks\_resource\_group\_name) | Resource group of the existing AKS cluster. Defaults to resource\_group\_name. | `string` | `null` | no |
 | <a name="input_key_vault_id"></a> [key\_vault\_id](#input\_key\_vault\_id) | Key Vault ID holding the database password secret. | `string` | n/a | yes |
 | <a name="input_lb_subnet_id"></a> [lb\_subnet\_id](#input\_lb\_subnet\_id) | Load balancer subnet ID. | `string` | n/a | yes |
 | <a name="input_location"></a> [location](#input\_location) | Azure region. | `string` | `"australiaeast"` | no |

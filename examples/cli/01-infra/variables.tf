@@ -49,7 +49,23 @@ variable "tfe_hostname" {
 }
 variable "aks_kubernetes_version" {
   type        = string
-  description = "AKS version supported in the region and by TFE (az aks get-versions -l australiaeast)."
+  default     = null
+  description = "AKS version supported in the region and by TFE (az aks get-versions -l australiaeast). Only used when create_aks_cluster = true."
+}
+variable "create_aks_cluster" {
+  type        = bool
+  default     = true
+  description = "true: build a new AKS cluster for TFE. false: install on the existing cluster in existing_aks_cluster_name."
+}
+variable "existing_aks_cluster_name" {
+  type        = string
+  default     = null
+  description = "Existing AKS cluster (create_aks_cluster = false). Needs the OIDC issuer and workload identity enabled."
+}
+variable "existing_aks_resource_group_name" {
+  type        = string
+  default     = null
+  description = "Resource group of the existing AKS cluster. Defaults to resource_group_name."
 }
 variable "size" {
   type        = string

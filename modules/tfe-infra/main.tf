@@ -74,7 +74,7 @@ module "tfe" {
   create_tfe_private_dns_record = false
 
   # AKS
-  create_aks_cluster                  = true
+  create_aks_cluster                  = var.create_aks_cluster
   aks_kubernetes_version              = var.aks_kubernetes_version
   aks_api_server_authorized_ip_ranges = var.aks_authorized_cidrs
   aks_default_node_pool_vm_size       = local.settings.aks_node_vm_size
@@ -82,7 +82,7 @@ module "tfe" {
   create_aks_tfe_node_pool            = local.settings.aks_tfe_pool
   aks_tfe_node_pool_vm_size           = "Standard_D8ds_v5"
   aks_tfe_node_pool_node_count        = 3
-  aks_workload_identity_enabled       = true
+  aks_workload_identity_enabled       = var.create_aks_cluster # existing cluster: identity is in existing_aks.tf
   aks_oidc_issuer_enabled             = true
 
   # Database
@@ -97,7 +97,7 @@ module "tfe" {
   redis_managed_clustering_policy         = local.redis_clustering_policy
 
   # Object storage
-  tfe_object_storage_azure_use_msi = true
+  tfe_object_storage_azure_use_msi = var.create_aks_cluster
   storage_account_replication_type = local.settings.storage_replication
   storage_account_ip_allow         = local.settings.storage_ip_allow
 }

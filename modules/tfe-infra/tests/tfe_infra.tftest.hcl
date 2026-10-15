@@ -29,6 +29,12 @@ override_module {
   }
 }
 
+# Existing-AKS mode reads the storage account the HVD module created.
+override_data {
+  target = data.azurerm_storage_account.tfe
+  values = { id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tflab-tfe-rg/providers/Microsoft.Storage/storageAccounts/tflabtfeblob" }
+}
+
 variables {
   prefix                  = "tflab"
   resource_group_name     = "tflab-tfe-rg"
@@ -182,4 +188,71 @@ run "redis_is_not_clustered" {
     condition     = local.redis_clustering_policy == "NoCluster"
     error_message = "Sidekiq needs cross-slot MULTI and BRPOP, so Azure Managed Redis must be NoCluster (EnterpriseCluster gives CROSSSLOT and runs stay pending)."
   }
+}
+
+run "existing_aks_cluster" {
+  command = apply
+
+  variables {
+    create_aks_cluster               = false
+    existing_aks_cluster_name        = "platform-aks"
+    existing_aks_resource_group_name = "platform-rg"
+  }
+
+  override_data {
+    target = data.azurerm_kubernetes_cluster.existing[0]
+    values = {
+      oidc_issuer_enabled = true
+      oidc_issuer_url     = "https://oidc.example/issuer/"
+      kube_config = [{
+        host                   = "https://platform-aks.example:443"
+        cluster_ca_certificate = "Y2E="
+        client_certificate     = "Y2VydA=="
+        client_key             = "a2V5"
+        username               = "u"
+        password               = "p"
+      }]
+    }
+  }
+
+  override_resource {
+    target = azurerm_user_assigned_identity.tfe[0]
+    values = {
+      id        = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tflab-tfe-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/tflab-tfe-aks-msi"
+      client_id = "44444444-4444-4444-4444-444444444444"
+    }
+  }
+
+  assert {
+    condition     = output.aks_cluster_name == "platform-aks"
+    error_message = "aks_cluster_name should be the existing cluster."
+  }
+  assert {
+    condition     = nonsensitive(output.kube_host) == "https://platform-aks.example:443"
+    error_message = "kube credentials should come from the existing cluster."
+  }
+  assert {
+    condition     = output.tfe_object_storage_azure_client_id == "44444444-4444-4444-4444-444444444444"
+    error_message = "Blob client ID should be the identity created for the existing cluster."
+  }
+  assert {
+    condition     = azurerm_federated_identity_credential.tfe[0].issuer == "https://oidc.example/issuer/" && azurerm_federated_identity_credential.tfe[0].subject == "system:serviceaccount:tfe:tfe"
+    error_message = "Federated credential must trust the existing cluster's issuer for tfe:tfe."
+  }
+}
+
+run "existing_aks_needs_oidc" {
+  command = plan
+
+  variables {
+    create_aks_cluster        = false
+    existing_aks_cluster_name = "platform-aks"
+  }
+
+  override_data {
+    target = data.azurerm_kubernetes_cluster.existing[0]
+    values = { oidc_issuer_enabled = false, oidc_issuer_url = "" }
+  }
+
+  expect_failures = [data.azurerm_kubernetes_cluster.existing]
 }

@@ -11,26 +11,26 @@ output "tfe_pod_requests" {
   description = "TFE pod CPU and memory requests for this size. The lab preset is below the chart default so the pod fits Standard_D4ds_v5 nodes."
 }
 output "aks_cluster_name" {
-  value       = module.tfe.aks_cluster_name
+  value       = local.aks_cluster_name
   description = "AKS cluster name."
 }
 output "kube_host" {
-  value       = module.tfe.aks_kube_config.host
+  value       = local.kube.host
   sensitive   = true
   description = "AKS API endpoint."
 }
 output "kube_cluster_ca_certificate" {
-  value       = module.tfe.aks_kube_config.cluster_ca_certificate
+  value       = local.kube.cluster_ca_certificate
   sensitive   = true
   description = "Base64 cluster CA."
 }
 output "kube_client_certificate" {
-  value       = module.tfe.aks_kube_config.client_certificate
+  value       = local.kube.client_certificate
   sensitive   = true
   description = "Base64 client certificate (cluster-admin on a local-account cluster)."
 }
 output "kube_client_key" {
-  value       = module.tfe.aks_kube_config.client_key
+  value       = local.kube.client_key
   sensitive   = true
   description = "Base64 client key (cluster-admin on a local-account cluster)."
 }
@@ -60,7 +60,7 @@ output "tfe_object_storage_azure_container" {
   description = "Blob container name."
 }
 output "tfe_object_storage_azure_client_id" {
-  value       = module.tfe.tfe_object_storage_azure_client_id
+  value       = local.tfe_object_storage_azure_client_id
   description = "Workload identity client ID for Blob access."
 }
 output "tfe_redis_host" {

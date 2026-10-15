@@ -10,6 +10,12 @@ redis_subnet_id         = "<redis-subnet-resource-id>"
 key_vault_id            = "<key-vault-resource-id>"
 db_password_secret_name = "<db-password-secret-name>"
 tfe_hostname            = "<tfe-fqdn>"
+# Option A: build a new AKS cluster for TFE
+create_aks_cluster      = true
 aks_kubernetes_version  = "<aks-version>"
+# Option B: install on your existing AKS cluster (OIDC issuer and workload identity enabled)
+# create_aks_cluster               = false
+# existing_aks_cluster_name        = "<aks-cluster-name>"
+# existing_aks_resource_group_name = "<aks-resource-group>"
 size                    = "lab"
 aks_authorized_cidrs    = ["<agent-ip>/32"]

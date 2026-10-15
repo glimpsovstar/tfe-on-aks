@@ -1,10 +1,17 @@
-# tf-azure-aks-TFE
+# tfe-on-aks
 
 Terraform that builds a small AKS cluster in Azure, installs Terraform Enterprise (TFE) 2.0.8 on it, and configures TFE. It runs as an HCP Terraform Stack on an HCP Terraform agent inside the Azure VNet. Every layer is also a plain module you can run from the CLI or Azure DevOps.
 
 It is a reference implementation. The default `lab` preset is small and cost-sensitive; the `small` and `production` presets are described in [docs/architecture.md](docs/architecture.md). See [docs/production.md](docs/production.md) for what to change before production.
 
-**New AKS only: using an existing AKS cluster is not supported yet.**
+## Two ways to build
+
+| Option | Set in `tfe-infra` | What it does |
+|---|---|---|
+| **A. New AKS for TFE** (default, tested end to end) | `create_aks_cluster = true`, `aks_kubernetes_version` | Builds the AKS cluster, then the data services, then installs and configures TFE. |
+| **B. Your existing AKS** (unit-tested, not yet run against a live cluster) | `create_aks_cluster = false`, `existing_aks_cluster_name`, optionally `existing_aks_resource_group_name` | Builds only the data services and the TFE identity, then installs TFE on your cluster. |
+
+Option B needs, on your cluster: the OIDC issuer and workload identity enabled (`az aks update -g <rg> -n <aks> --enable-oidc-issuer --enable-workload-identity`); Network Contributor for the cluster identity on the AKS and load balancer subnets; local accounts enabled, because `02-app` connects with the cluster's `kube_config` (Entra-only clusters are not supported yet); and a route from where you run `02-app` and `03-config` to the cluster API and the internal load balancer. Option B is supported in the plain CLI path ([examples/cli](examples/cli/README.md)) and in `modules/tfe-infra`; the sample Stack deployment builds a new cluster.
 
 ## Disclaimer
 
@@ -92,11 +99,11 @@ Other directories: `bootstrap/` (one-time laptop setup), `examples/cli/` (plain 
 - **Parent DNS zone.** Bootstrap creates a delegated child zone and writes one NS record in your parent zone, so the operator needs DNS Zone Contributor there (in whichever subscription it lives) at bootstrap apply and at destroy. Set `public_dns_zone_subscription_id` if the zone is in another subscription, or `create_lab_delegation = false` and add the NS record by hand if it is in another tenant. The agent VM identity can write to the child zone only.
 - **Wiring check at plan review.** `terraform test` cannot see child-module resources, so the `tfe-infra` to HVD module wiring is checked by reading the first Stack plan. The runbook lists what to read.
 - **AKS API exposure.** The sample keeps the AKS API public endpoint, limited to the agent VM's IP and `operator_cidrs`.
-- **Vendored HVD module.** `modules/tfe-infra` uses HashiCorp's `terraform-enterprise-aks-hvd` 0.3.0, vendored in `vendor/terraform-enterprise-aks-hvd` with three patches listed in its `PATCHES.md`. Azure Managed Redis is created `NoCluster`, because Sidekiq can't use `EnterpriseCluster` (CROSSSLOT errors, runs stay pending). The federated credential uses the azurerm v5 attribute names, and an `aks_kube_config` output is added. Return to the registry module when it exposes the clustering policy.
+- **Vendored HVD module.** `modules/tfe-infra` uses HashiCorp's `terraform-enterprise-aks-hvd` 0.3.0, vendored in `vendor/terraform-enterprise-aks-hvd` with three patches listed in its `PATCHES.md`. Azure Managed Redis is created `NoCluster`, because Sidekiq can't use `EnterpriseCluster` (CROSSSLOT errors, runs stay pending). The federated credential uses the azurerm v5 attribute names, and an `aks_kube_config` output is added. Upstream `main` now creates `NoCluster` too, but no tagged release has it yet (0.3.0 is the latest). Return to the registry module when one does.
 - **HVD module and TFE 2.x differences found live.** The module's Helm template sets `TFE_OBJECT_STORAGE_AZURE_USE_MSI=true`, which breaks AKS workload identity on TFE 2.0.8 (the module sets it for a managed-identity path that does not work with workload identity here); `tfe-install` follows the TFE Kubernetes docs instead.
 - **One deprecation warning left.** `storage_account_name` on the module's `azurerm_storage_container` is deprecated. Switching to `storage_account_id` may recreate the TFE blob container, so it stays until upstream changes it.
 - **Stack identity.** It has Contributor and User Access Administrator on its own resource group, including the agent VM. A Stack run could modify its own federated credentials or run commands on the agent. Acceptable for a sample. For production, put the identity and agent in a separate resource group and/or use an ABAC condition on User Access Administrator.
-- **`.trivyignore`.** It is repo-wide. Re-check AZU-0043 when support for using an existing AKS cluster is added.
+- **`.trivyignore`.** It is repo-wide. With option B the network policy is whatever your cluster has; check it.
 - **Community module.** The HVD module is community-maintained. It is not covered by product support.
 
 ## Develop

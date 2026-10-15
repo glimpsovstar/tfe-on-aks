@@ -49,7 +49,7 @@ run "owners_membership_is_additive" {
 
 run "rejects_bad_org_name" {
   command = plan
-  variables { organization_name = "ASC Lab" }
+  variables { organization_name = "Example Lab" }
   expect_failures = [var.organization_name]
 }
 
