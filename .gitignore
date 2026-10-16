@@ -17,3 +17,8 @@ demo-vpn/
 *.pfx
 crash.log
 .DS_Store
+
+# CLI roots: your backend config and saved plans
+examples/cli/*/backend.tf
+*.plan
+*.tfplan

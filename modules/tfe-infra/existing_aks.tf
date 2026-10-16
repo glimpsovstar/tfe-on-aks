@@ -21,10 +21,12 @@ data "azurerm_kubernetes_cluster" "existing" {
   }
 }
 
-data "azurerm_storage_account" "tfe" {
-  count               = var.create_aks_cluster ? 0 : 1
-  name                = module.tfe.tfe_object_storage_azure_account_name
-  resource_group_name = var.resource_group_name
+data "azurerm_client_config" "current" {}
+
+locals {
+  # Built from the module output, not read with a data source: the name is known at plan time,
+  # so a data source would be read before the module has created the account.
+  tfe_storage_account_id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Storage/storageAccounts/${module.tfe.tfe_object_storage_azure_account_name}"
 }
 
 resource "azurerm_user_assigned_identity" "tfe" {
@@ -37,7 +39,7 @@ resource "azurerm_user_assigned_identity" "tfe" {
 
 resource "azurerm_role_assignment" "tfe_blob" {
   count                = var.create_aks_cluster ? 0 : 1
-  scope                = data.azurerm_storage_account.tfe[0].id
+  scope                = local.tfe_storage_account_id
   role_definition_name = "Storage Blob Data Owner"
   principal_id         = azurerm_user_assigned_identity.tfe[0].principal_id
 }

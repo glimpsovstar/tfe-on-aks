@@ -29,10 +29,10 @@ override_module {
   }
 }
 
-# Existing-AKS mode reads the storage account the HVD module created.
+# Existing-AKS mode builds the storage account ID from the subscription.
 override_data {
-  target = data.azurerm_storage_account.tfe
-  values = { id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/tflab-tfe-rg/providers/Microsoft.Storage/storageAccounts/tflabtfeblob" }
+  target = data.azurerm_client_config.current
+  values = { subscription_id = "00000000-0000-0000-0000-000000000000" }
 }
 
 variables {
