@@ -38,16 +38,7 @@ Keep your real subscription, tenant and zone IDs out of this repo. Replace every
 
 ## 2. Bootstrap
 
-Order matters in a live session: create `main` and push it before you apply bootstrap, because the `tfe_stack` resource tracks `main` (see step 3 for the matching rule on the placeholder values).
-
-1. Create `main` from the spec-approval commit and push it:
-
-   ```bash
-   git branch main <spec-approval-commit>
-   git push origin main
-   ```
-
-2. Then run the bootstrap apply below. Set `aks_kubernetes_version`, `admin_email` and `organization_email` on your feature branch before you merge that branch to `main` (step 3), because the merge is what the Stack ingests.
+The Stack reads its configuration from the branch in `github_branch` (default `main`) of the repository in `github_repo`. Push this repository to your own GitHub organisation first, so that branch exists before bootstrap creates the Stack. Set the real values in step 3 before the first push to that branch, because each push to it starts a new plan.
 
 Bootstrap runs once from your laptop with local state. That state holds secrets (agent token, licence, SSH key), so keep `bootstrap/terraform.tfstate` private. Details are in [bootstrap/README.md](../bootstrap/README.md).
 
@@ -115,7 +106,7 @@ List what AKS offers:
 az aks get-versions -l australiaeast -o table
 ```
 
-Make this change on your feature branch and commit it. The merge to `main` is what the Stack ingests, so the real values must be on the branch before that merge. Merge to `main` and push only when they are set.
+Commit the change. The tracked branch is what the Stack ingests, so push to it only when the real values are set.
 
 ## 4. Deploy the Stack
 
@@ -165,7 +156,7 @@ The Stack's `tfe` provider has to reach TFE at plan time, so while TFE is down e
 
 1. Find why the pod is not Ready: `kubectl -n tfe get pods`, `kubectl -n tfe logs deploy/terraform-enterprise`.
 2. If a secret is stale, put the right values into the `tfe-secrets` Kubernetes secret (for Redis, the `primaryKey` from `az redisenterprise database list-keys`), then `kubectl -n tfe rollout restart deployment/terraform-enterprise` and wait for Ready.
-3. Rerun the deployment: `terraform stacks deployment-group rerun -deployment-group-id <id> -deployment-names lab`. The plan then writes the same values back, so Terraform owns the secret again.
+3. Rerun the deployment: `terraform stacks deployment-group rerun -deployment-group-id <id> -deployment-names main`. The plan then writes the same values back, so Terraform owns the secret again.
 
 To avoid this, plan any change that recreates Redis or PostgreSQL knowing TFE will restart, and consider moving `tfe_config` to its own Stack so infrastructure fixes never need TFE to be up.
 
@@ -331,6 +322,6 @@ The same modules run without Stacks, in three roots: `examples/cli/01-infra`, `0
 - **Wiring is checked at plan review.** `terraform test` cannot see child-module resources, so the values passed from `tfe-infra` into the HVD module are not unit-tested. Do the plan review in step 4 before approving the first plan.
 - **AKS API exposure.** The API server has a public endpoint, limited to the agent VM's public IP and your `operator_cidrs`. This is acceptable for a sample environment. A private API server is not supported yet, because an existing AKS cluster cannot be used.
 - **Secrets in state.** Bootstrap local state, Stack state and the agent VM's `custom_data` contain secrets. Treat them accordingly.
-- **Community module.** The HVD module is community-maintained code, not covered by product support. It is not covered by product support.
+- **Community module.** The HVD module is community-maintained code, not covered by product support.
 - **Stack identity scope.** The Stack identity has Contributor on its own resource group, plus Role Based Access Control Administrator limited by an ABAC condition to assigning only Network Contributor and Storage Blob Data Owner (it cannot grant Owner or other roles). The resource group still includes the agent VM, so a Stack run could run commands on the agent. For production, put the identity and the agent in separate resource groups.
 - **`.trivyignore` is repo-wide.** It ignores AZU-0043 for every configuration in the repo. Re-check AZU-0043 when support for using an existing AKS cluster is added.
