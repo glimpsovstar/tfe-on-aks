@@ -21,7 +21,7 @@ Keep your real subscription, tenant and zone IDs out of this repo. Replace every
   az vm list-usage -l australiaeast -o table
   ```
 
-  Check for at least 8 free vCPUs in the "Standard Ddsv5 Family vCPUs" row (2 nodes x 4 vCPUs), plus room for the agent VM in the "Standard BS Family vCPUs" row and in the total regional vCPUs.
+  Check for at least 8 free vCPUs in the "Standard DDSv5 Family vCPUs" row (2 nodes x 4 vCPUs), plus 2 for the agent VM in the "Standard Bsv2 Family vCPUs" row and in the total regional vCPUs.
 - **TFE licence file** (`.hclic`) on your laptop. Use your Terraform Enterprise licence.
 - **Parent public Azure DNS zone** that you own, for example `example.com`. Bootstrap writes one NS record into it, and removes it at destroy.
   - Your `az login` needs DNS Zone Contributor on the parent zone, in whichever subscription the zone lives.
@@ -282,14 +282,20 @@ Then trigger a new plan and apply of the deployment in HCP Terraform. The admin 
 Order matters: the Stack first, then bootstrap.
 
 1. In `deployments.tfdeploy.hcl`, set `destroy = true` on `deployment "main"`. Commit, push to the tracked branch, and approve the destroy plan in HCP Terraform.
-2. Wait for the deployment to be empty.
+2. Wait for the deployment to be empty. HCP Terraform runs one more plan after the destroy apply. That plan fails with `required token could not be found`, because the `tfe` provider's admin token was destroyed, so the run shows as failed. This is expected once the destroy apply has completed: check that the apply step completed and that the deployment's state has no resources.
 3. Destroy bootstrap:
 
    ```bash
    terraform -chdir=bootstrap destroy
    ```
 
-   Your current public IP must still match `operator_cidrs` in `terraform.tfvars`, or the Key Vault calls are refused. You also need DNS write access on the parent zone, because destroy removes the NS record.
+   Your current public IP must still match `operator_cidrs` in `terraform.tfvars`, or the Key Vault calls are refused. If your IP has changed, changing `operator_cidrs` is not enough on its own: the plan reads a Key Vault secret before it can update the firewall, and fails with `ForbiddenByFirewall`. Add the new IP by hand first, then update `operator_cidrs` and run the destroy:
+
+   ```bash
+   az keyvault network-rule add --name <key-vault-name> --ip-address <new-ip>/32
+   ```
+
+   You also need DNS write access on the parent zone, because destroy removes the NS record.
 
 Afterwards, delete your local `bootstrap/terraform.tfstate` files if you no longer need them, because they hold secrets. Remove the hosts-file entry too.
 
