@@ -13,6 +13,19 @@ It is a reference implementation. The default `lab` preset is small and cost-sen
 
 Option B needs, on your cluster: the OIDC issuer and workload identity enabled (`az aks update -g <rg> -n <aks> --enable-oidc-issuer --enable-workload-identity`); Network Contributor for the cluster identity on the AKS and load balancer subnets; local accounts enabled, because `02-app` connects with the cluster's `kube_config` (Entra-only clusters are not supported yet); and a route from where you run `02-app` and `03-config` to the cluster API and the internal load balancer. **Security note for option B:** `01-infra` reads your cluster's `kube_config` and stores its client certificate and key in its Terraform state, so that `02-app` can connect. On a cluster with local accounts that credential is cluster-admin on your cluster, not only on TFE. Treat the `01-infra` state as a cluster-admin secret: private storage account, tight RBAC, logged access. A version that uses the operator's own Entra login instead is planned. Option B is supported in the plain CLI path ([examples/cli](examples/cli/README.md)) and in `modules/tfe-infra`; the sample Stack deployment builds a new cluster.
 
+## Scope
+
+What this repository does and does not cover today:
+
+| Area | Covered | Not covered yet |
+|---|---|---|
+| AKS | Option A builds a new AKS cluster through the HVD module (tested end to end). Option B installs into your existing cluster from the CLI path (unit-tested only). | Option B in the sample Stack deployment; option B on Entra-only clusters (local accounts must be on) |
+| Secrets | Azure Key Vault holds the database password, TFE encryption password, TLS certificate and key, and the admin token. Terraform copies them into Kubernetes secrets. | HashiCorp Vault as the source of truth (for example Vault Secrets Operator or Vault PKI). If you run Vault, plan that integration separately. |
+| TLS | Let's Encrypt certificate through DNS-01 on a delegated child zone | A certificate from your own CA. ACME is built into `modules/tfe-install/tls.tf` and there is no input for your own certificate yet, so this needs a code change (see [docs/production.md](docs/production.md)). |
+| Sign-in | Local TFE users; the first admin is created through the IACT token | SSO (SAML with Entra ID) |
+| TFE configuration | One organisation, projects and a `platform` team | VCS connections, policy sets, agent pools inside TFE, workspace onboarding |
+| Operations | `scripts/acceptance.sh` proves a real plan and apply | Monitoring, backup and restore, disaster recovery |
+
 ## Disclaimer
 
 This repository is provided as-is, without warranty or support. It is a reference implementation; review and test it before production use. It is not an official HashiCorp or IBM product.
@@ -61,7 +74,7 @@ Full steps, with commands, are in the [runbook](docs/runbook.md).
 4. **Pass 2**: once `tfe_bootstrap` has applied, set `configure_tfe = true`, push and approve. `tfe_config` then creates the organisation, projects and team.
 5. **Acceptance**: `./scripts/acceptance.sh --rg <rg> --aks <aks-name> --hostname <fqdn> --key-vault <name> --org <org>`.
 6. **Destroy**: set `destroy = true` on `deployment "main"` and approve, then `terraform -chdir=bootstrap destroy`.
-7. **Optional demo VPN**: `enable_demo_vpn = true` in bootstrap, then `./scripts/demo-vpn-profile.sh`, to open the private TFE URL from your laptop (about A$0.60/h while on). See the [runbook](docs/runbook.md#demo-access-through-vpn-optional).
+7. **Optional demo VPN**: `enable_demo_vpn = true` in bootstrap, then `./scripts/demo-vpn-profile.sh`, to open the private TFE URL from your laptop (about A$0.65/h while on). See the [runbook](docs/runbook.md#demo-access-through-vpn-optional).
 
 ### CLI path (no Stack)
 
@@ -69,12 +82,12 @@ Run the same modules as three plain roots: [examples/cli/README.md](examples/cli
 
 ## Cost (`lab` preset)
 
-Azure retail list prices, Australia East, AUD, before GST.
+Estimates from the Azure Retail Prices API (`prices.azure.com`, pay-as-you-go, Linux), Australia East, AUD, before GST, checked 2026-10-20. Your prices depend on your agreement and region; re-check them before you budget.
 
 | | |
 |---|---|
-| AKS, PostgreSQL, 2 x Redis (`lab`) | about A$1.3 to 1.5 an hour |
-| Agent VM (`Standard_B2ls_v2`; some subscriptions restrict B-series SKUs, so check availability) | about A$0.08 an hour (A$55 to A$64 a month) |
+| AKS nodes, PostgreSQL, 2 x Redis (`lab`) | about A$1.2 an hour |
+| Agent VM (`Standard_B2ls_v2`; some subscriptions restrict B-series SKUs, so check availability) | about A$0.08 an hour (about A$55 a month) |
 | Small items (load balancer, IPs, endpoints, disks, Blob, DNS) | about A$50 to A$150 a month |
 | A forgotten lab | about A$35 a day |
 

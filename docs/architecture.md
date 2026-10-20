@@ -45,7 +45,7 @@ flowchart TB
 
 - TFE, PostgreSQL, Redis and Blob storage have no public inbound endpoint.
 - The AKS API server keeps its public endpoint, limited to authorised IP ranges: the agent VM's static public IP and `operator_cidrs`. The HVD module has no private-cluster input. See "Known gaps" in the [README](../README.md).
-- Optional demo access: with `enable_demo_vpn = true`, bootstrap adds a point-to-site VPN gateway (`VpnGw1AZ`, OpenVPN, certificate auth) and a DNS Private Resolver inbound endpoint in the same VNet. A laptop on the VPN resolves the private zone through the resolver and opens `https://<tfe hostname>` directly. It mirrors a customer's corporate network, hub and private resolver path, and costs about A$0.60/h while on. See the [runbook](runbook.md#demo-access-through-vpn-optional).
+- Optional demo access: with `enable_demo_vpn = true`, bootstrap adds a point-to-site VPN gateway (`VpnGw1AZ`, OpenVPN, certificate auth) and a DNS Private Resolver inbound endpoint in the same VNet. A laptop on the VPN resolves the private zone through the resolver and opens `https://<tfe hostname>` directly. It mirrors a customer's corporate network, hub and private resolver path, and costs about A$0.65/h while on. See the [runbook](runbook.md#demo-access-through-vpn-optional).
 - Without it, you reach the TFE UI with `kubectl port-forward` to the TFE service and a hosts-file entry for the FQDN. The certificate is valid for the FQDN, so the browser trusts it.
 
 ## DNS and certificate path
@@ -93,7 +93,7 @@ The plain CLI path uses the same modules in three roots (`examples/cli/01-infra`
 
 ## Sizing and cost
 
-Azure retail list prices, Australia East, AUD, before GST (Azure Retail Prices API, 2026-10-05 and 2026-10-06). The presets are in `modules/tfe-infra/main.tf`.
+Estimates from the Azure Retail Prices API (`prices.azure.com`, pay-as-you-go, Linux), Australia East, AUD, before GST, checked 2026-10-20. AKS uses the Free tier (the module does not set `sku_tier`). The presets are in `modules/tfe-infra/main.tf`.
 
 | | `lab` | `small` | `production` |
 |---|---|---|---|
@@ -104,9 +104,10 @@ Azure retail list prices, Australia East, AUD, before GST (Azure Retail Prices A
 | PostgreSQL | GP_Standard_D2ds_v4, HA off | GP_Standard_D4ds_v4, HA off | GP_Standard_D4ds_v4 or larger, HA on |
 | Azure Managed Redis (x2) | Balanced_B0, HA off | Balanced_B3, HA on | Balanced_B3 or larger, HA on |
 | Storage | ZRS | ZRS | ZRS |
-| Approx. A$ per hour | 1.3 to 1.5 | 2.6 to 2.7 | depends on sizing |
+| Approx. A$ per hour (nodes, PostgreSQL, Redis) | 1.2 | 2.6 to 2.7 | depends on sizing |
 
-- The agent VM adds about A$0.04 an hour (A$27 a month) while it exists.
+- `lab` breakdown per hour: nodes 2 x A$0.4046, PostgreSQL 2 vCore x A$0.1738, Redis 2 x A$0.0285 (`Balanced_B0`).
+- The agent VM (`Standard_B2ls_v2`) adds about A$0.08 an hour (A$0.0752, about A$55 a month) while it exists.
 - Small items (load balancer, public IP, private endpoints, disks, Blob, DNS zones) add roughly A$50 to A$150 a month.
 - Bootstrap adds a consumption budget alert on the resource group (alerts at 50% and 90% of `budget_amount`) and tags every resource with `owner` and `expires`.
-- `Balanced_B0` is unproven for TFE. The fallback is `Balanced_B1`, about A$0.06 an hour more.
+- `Balanced_B0` is unproven for TFE. The fallback is `Balanced_B1` (A$0.057 an hour each), about A$0.06 an hour more for the pair.

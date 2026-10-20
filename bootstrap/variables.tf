@@ -134,7 +134,7 @@ variable "budget_contact_emails" {
 variable "enable_demo_vpn" {
   type        = bool
   default     = false
-  description = "Create the optional demo access path: point-to-site VPN gateway plus DNS Private Resolver inbound endpoint, so a laptop can open the private TFE URL. Costs about A$0.60/h while on."
+  description = "Create the optional demo access path: point-to-site VPN gateway plus DNS Private Resolver inbound endpoint, so a laptop can open the private TFE URL. Costs about A$0.65/h while on."
 }
 variable "demo_vpn_gateway_subnet_cidr" {
   type        = string

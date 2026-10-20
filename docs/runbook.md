@@ -240,7 +240,7 @@ On the Mac:
 3. In Azure VPN Client, import `demo-vpn/azurevpnconfig.xml`, choose the `demo-vpn-client` certificate, save and connect.
 4. Open `https://tfe.<lab_subdomain>.<parent zone>`.
 
-Cost while it is on: about A$0.29/h for the gateway plus about A$0.28/h for the resolver inbound endpoint, so about A$0.60/h. Turn it off when the demo is done:
+Cost while it is on: about A$0.30/h for the gateway plus about A$0.35/h for the resolver inbound endpoint (A$256 a month), so about A$0.65/h. Turn it off when the demo is done:
 
 ```bash
 # remove the enable_demo_vpn line from bootstrap/terraform.tfvars (or set it to false), then:
@@ -308,12 +308,12 @@ After a bootstrap destroy and rebuild, the child zone gets a new set of name ser
 
 ## 10. Cost and budget
 
-Figures are Azure retail list prices, Australia East, AUD, before GST.
+Figures are estimates from the Azure Retail Prices API (`prices.azure.com`, pay-as-you-go, Linux), Australia East, AUD, before GST, checked 2026-10-20. Re-check them for your agreement and region.
 
 | | |
 |---|---|
-| `lab` preset | about A$1.3 to 1.5 an hour |
-| Agent VM (`Standard_B2ls_v2`) | about A$0.08 an hour (A$55 to A$64 a month). Some subscriptions restrict B-series SKUs; check availability in your subscription and region. |
+| `lab` preset (AKS nodes, PostgreSQL, 2 x Redis) | about A$1.2 an hour |
+| Agent VM (`Standard_B2ls_v2`) | about A$0.08 an hour (about A$55 a month). Some subscriptions restrict B-series SKUs; check availability in your subscription and region. |
 | Small items (load balancer, IPs, private endpoints, disks, Blob, DNS) | about A$50 to A$150 a month |
 | A forgotten lab | about A$35 a day |
 
