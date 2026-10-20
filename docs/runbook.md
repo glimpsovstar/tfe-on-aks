@@ -48,7 +48,7 @@ cp terraform.tfvars.example terraform.tfvars   # fill in; the file is git-ignore
 terraform init && terraform apply
 ```
 
-Set these in `terraform.tfvars` (the example file lists the required ones): `prefix` (3 to 10 lowercase letters or digits, no `tfe`), `subscription_id`, `operator_cidrs`, `public_dns_zone_name`, `public_dns_zone_resource_group`, `hcp_organization`, one of `github_app_installation_id` or `vcs_oauth_token_id`, `tfe_license_file`, `tfc_agent_version` (1.25.2 or later for Stacks), `owner_tag`, `expires_tag`, `budget_contact_emails`. Optional: `public_dns_zone_subscription_id` (parent zone in another subscription) and `create_lab_delegation = false` (parent zone in another tenant).
+Set these in `terraform.tfvars` (the example file lists the required ones): `prefix` (3 to 10 lowercase letters or digits, no `tfe`), `subscription_id`, `operator_cidrs`, `public_dns_zone_name`, `public_dns_zone_resource_group`, `hcp_organization`, `github_repo` (your copy of this repository, `<owner>/<repo>`), one of `github_app_installation_id` or `vcs_oauth_token_id`, `tfe_license_file`, `tfc_agent_version` (1.25.2 or later for Stacks), `owner_tag`, `expires_tag`, `budget_contact_emails`. Optional: `public_dns_zone_subscription_id` (parent zone in another subscription) and `create_lab_delegation = false` (parent zone in another tenant).
 
 `github_branch` defaults to `main`. The Stack reads its configuration from that branch, so the Stack files must be on it. If you work from another branch, set `github_branch` to match.
 
@@ -96,7 +96,7 @@ Then confirm in HCP Terraform that the agent pool shows one idle agent. If you s
 
 | Input | Placeholder | Set it to |
 |---|---|---|
-| `aks_kubernetes_version` | `"1.35"` | A version AKS offers in the region and TFE 2.0.8 lists as tested (1.35 or 1.36) |
+| `aks_kubernetes_version` | `"1.36"` | A version AKS offers in the region and TFE 2.0.8 lists as tested (1.35 or 1.36) |
 | `admin_email` | `"tfe-admin@example.com"` | A real address for the first site admin |
 | `organization_email` | `"tfe-admin@example.com"` | A real address for the organisation |
 

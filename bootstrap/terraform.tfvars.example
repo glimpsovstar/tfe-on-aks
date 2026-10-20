@@ -9,6 +9,8 @@ hcp_organization               = "<hcp-terraform-org>"
 # Connect the Stack to GitHub with exactly one of these two:
 github_app_installation_id     = "<ghain-...>"  # GitHub App installation
 # vcs_oauth_token_id           = "<ot-...>"     # classic GitHub OAuth connection (org Settings > Version Control > Providers)
+github_repo                    = "<owner>/<repo>" # your copy of this repository, which the Stack reads
+# github_branch                = "main"           # the branch the Stack tracks (default main)
 tfe_license_file               = "~/licences/terraform.hclic"
 tfc_agent_version              = "1.33.0" # must be 1.25.2 or later for Stacks
 owner_tag                      = "<you>"
